@@ -10,7 +10,7 @@ CORS(app, resources={
     r"/api/*": {
         "origins": [
             "http://localhost:3000",  # For local development
-            "https://biometrics-dashboard-di51dyc44-amaan-rathores-projects.vercel.app/"  # For production
+            "https://biometrics-dashboard-iq8y63fym-amaan-rathores-projects.vercel.app/"  # For production
         ],
         "methods": ["GET", "POST", "PUT", "DELETE"],
         "allow_headers": ["Content-Type", "Authorization"]
