@@ -11,17 +11,13 @@ CORS(app, resources={
         "origins": [
             "http://localhost:3000",
             "http://127.0.0.1:3000",
-            # Add your exact Vercel production domain here when you have one:
-            "https://biometrics-dashboard.vercel.app",
-            # Add the exact preview domain that was blocked:
-            "https://biometrics-dashboard-1q8y63fym-amaan-rathores-projects.vercel.app",
-            # If you have other specific Vercel preview domains, list them.
-            # For a truly dynamic wildcard, Flask-CORS might need a regex,
-            # but listing the exact ones is more reliable for now.
+            "https://biometrics-dashboard-iq8y63fym-amaan-rathores-projects.vercel.app/,  # Exact Vercel URL
+            # Add other preview domains if needed
         ],
-        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],  # Include OPTIONS for preflight
         "allow_headers": ["Content-Type", "Authorization", "Accept", "Origin", "X-Requested-With"],
-        "supports_credentials": False # Set to True only if you are sending cookies/auth tokens
+        "supports_credentials": False,
+        "expose_headers": []  # Optional, if frontend needs specific headers
     }
 })
 
