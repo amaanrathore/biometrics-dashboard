@@ -8,7 +8,7 @@ app = Flask(__name__)
 # Updated CORS configuration for production
 CORS(app, resources={
     r"/api/*": {
-        "origins": ["http://localhost:3000", "https://your-frontend-domain.com"],
+        "origins": ["http://localhost:3000", "https://biometrics-dashboard-k2lix7izv-amaan-rathores-projects.vercel.app"],
         "methods": ["GET", "POST", "PUT", "DELETE"],
         "allow_headers": ["Content-Type", "Authorization"]
     }
