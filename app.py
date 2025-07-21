@@ -11,7 +11,7 @@ CORS(app, resources={
         "origins": [
             "http://localhost:3000",
             "http://127.0.0.1:3000",
-            "https://biometrics-dashboard-iq8y63fym-amaan-rathores-projects.vercel.app/,  # Exact Vercel URL
+            "https://biometrics-dashboard-iq8y63fym-amaan-rathores-projects.vercel.app/",  # Exact Vercel URL
             # Add other preview domains if needed
         ],
         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],  # Include OPTIONS for preflight
