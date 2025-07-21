@@ -1,14 +1,17 @@
+import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import pandas as pd
-import os
+from gunicorn.app.base import BaseApplication
 
 app = Flask(__name__)
 
-# Updated CORS configuration for production
+# Refined CORS configuration for production
 CORS(app, resources={
     r"/api/*": {
-        "origins": ["http://localhost:3000", "https://biometrics-dashboard-k2lix7izv-amaan-rathores-projects.vercel.app"],
+        "origins": [
+            "https://biometrics-dashboard-k2lix7izv-amaan-rathores-projects.vercel.app"
+        ],
         "methods": ["GET", "POST", "PUT", "DELETE"],
         "allow_headers": ["Content-Type", "Authorization"]
     }
@@ -34,18 +37,15 @@ def load_biometric_data(file_path=None):
         # Skip first row and reset index
         df = df.iloc[1:].reset_index(drop=True)
         
-        # Define expected columns
+        # Define expected columns (adjusted to match actual data)
         expected_columns = [
             'Employee_ID', 'Employee_Name', 'Date', 'Check_In', 'Check_Out',
-            'Working_Hours', 'Late_Minutes', 'Status', 'Late_Flag', 'Is_Late',
-            'Unused'
+            'Working_Hours', 'Late_Minutes', 'Status', 'Late_Flag', 'Is_Late'
         ]
         
         # Handle column naming
-        if len(df.columns) == 13:
-            df.columns = expected_columns
-        else:
-            print(f"Warning: Expected 13 columns, found {len(df.columns)}")
+        if len(df.columns) != len(expected_columns):
+            print(f"Warning: Expected {len(expected_columns)} columns, found {len(df.columns)}")
             df.columns = expected_columns[:min(len(df.columns), len(expected_columns))] + \
                          [f'Extra_{i}' for i in range(len(df.columns) - len(expected_columns))]
         
@@ -162,9 +162,22 @@ def not_found(error):
 def internal_error(error):
     return jsonify({'error': 'Internal server error'}), 500
 
-if __name__ == '__main__':
-    # Get port from environment variable (for Render deployment)
-    port = int(os.getenv("PORT", 10000))
-    
-    # Run the app
-    app.run(host='0.0.0.0', port=port, debug=False)
+class StandaloneApplication(BaseApplication):
+    def __init__(self, app, options=None):
+        self.application = app
+        super().__init__()
+
+    def load_config(self):
+        config = {key: value for key, value in self.cfg.items() if key in self.cfg}
+        config.setdefault('bind', '0.0.0.0:' + str(os.getenv("PORT", "10000")))
+        return config
+
+    def load(self):
+        return self.application
+
+if __name__ == "__main__":
+    options = {
+        'bind': '0.0.0.0:' + str(os.getenv("PORT", "10000")),
+        'workers': 1,
+    }
+    StandaloneApplication(app, options).run()
