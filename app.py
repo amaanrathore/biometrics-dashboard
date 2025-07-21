@@ -50,7 +50,7 @@ def load_biometric_data(file_path=None):
                          [f'Extra_{i}' for i in range(len(df.columns) - len(expected_columns))]
         
         # Process data
-        df['Date'] = pd.to_datetime(df['Date'], format='%Y-%m-%d', errors='coerce').dt.strftime('%Y-%m-%d')
+        df['Date'] = pd.to_datetime(df['Date'], errors='coerce').dt.strftime('%Y-%m-%d')
         df['Employee_ID'] = df['Employee_ID'].astype(str).str.strip()
         df = df.fillna('N/A').infer_objects(copy=False)
         
@@ -168,8 +168,9 @@ class StandaloneApplication(BaseApplication):
         super().__init__()
 
     def load_config(self):
-        config = {key: value for key, value in self.cfg.items() if key in self.cfg}
-        config.setdefault('bind', '0.0.0.0:' + str(os.getenv("PORT", "10000")))
+        config = {}
+        config['bind'] = f'0.0.0.0:{os.getenv("PORT", "10000")}'
+        config['workers'] = 1
         return config
 
     def load(self):
