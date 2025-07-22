@@ -5,15 +5,19 @@ import pandas as pd
 
 app = Flask(__name__)
 
-# Refined CORS configuration for production and local development
+# Enhanced CORS configuration for production
 CORS(app, resources={
     r"/api/*": {
         "origins": [
             "http://localhost:3000",  # For local development
-            "https://biometrics-dashboard-di51dyc44-amaan-rathores-projects.vercel.app/"  # For production
+            "http://localhost:3001",  # Alternative local port
+            "https://biometrics-dashboard-di51dyc44-amaan-rathores-projects.vercel.app",  # Preview URL
+            "https://biometrics-dashboard.vercel.app",  # Main custom domain
+            # Avoid wildcard; add specific preview domains as needed
         ],
-        "methods": ["GET", "POST", "PUT", "DELETE"],
-        "allow_headers": ["Content-Type", "Authorization"]
+        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization", "Accept", "Origin", "X-Requested-With"],
+        "supports_credentials": False  # Set to False for security unless needed
     }
 })
 
@@ -44,18 +48,21 @@ def load_biometric_data(file_path=None):
             'Working_Hours', 'Late_Minutes', 'Status', 'Late_Flag', 'Is_Late'
         ]
         
-        # Always apply expected columns, adjusting for actual column count
+        # Apply expected columns, truncating or padding as needed
         df.columns = expected_columns[:len(df.columns)]
         if len(df.columns) < len(expected_columns):
             df.columns = list(df.columns) + [f'Extra_{i}' for i in range(len(expected_columns) - len(df.columns))]
-        
+        elif len(df.columns) > len(expected_columns):
+            df = df.iloc[:, :len(expected_columns)]
+            df.columns = expected_columns
+
         print("Columns after renaming:", df.columns.tolist())
         print("Sample Date values before conversion:", df['Date'].head().tolist())
         
-        # Enhanced date handling
+        # Enhanced date handling with string format
         df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
         print("Date values after conversion:", df['Date'].head().tolist())
-        df['Date'] = df['Date'].fillna('N/A')
+        df['Date'] = df['Date'].dt.strftime('%Y-%m-%d').fillna('N/A')  # Ensure string format for filtering
         df['Employee_ID'] = df['Employee_ID'].astype(str).str.strip()
         df = df.fillna('N/A').infer_objects(copy=False)
         
@@ -96,6 +103,7 @@ def health_check():
 @app.route('/api/employees', methods=['GET'])
 def get_employees():
     """Get all unique employees"""
+    print("GET /api/employees endpoint hit")
     if df is None or df.empty:
         print("No data available in DataFrame")
         return jsonify({'error': 'No data available'}), 500
@@ -111,6 +119,7 @@ def get_employees():
 @app.route('/api/search', methods=['GET'])
 def search_records():
     """Search records based on employee ID and date range"""
+    print("GET /api/search endpoint hit")
     if df is None or df.empty:
         print("No data available in DataFrame")
         return jsonify({'error': 'No data available'}), 500
@@ -144,7 +153,7 @@ def search_records():
         if result.empty:
             print(f"No records found for Employee_ID: '{employee_id}', From_Date: '{from_date}', To_Date: '{to_date}'")
             return jsonify({
-                'records': [], 
+                'records': [],
                 'message': f"No records found for Employee_ID: {employee_id}, From_Date: {from_date}, To_Date: {to_date}"
             })
         
@@ -169,32 +178,9 @@ def not_found(error):
 def internal_error(error):
     return jsonify({'error': 'Internal server error'}), 500
 
-# Conditional Gunicorn import and execution for deployment
-if 'GUNICORN' in os.environ:  # Check if running under Gunicorn (e.g., on Render)
-    from gunicorn.app.base import BaseApplication
 
-    class StandaloneApplication(BaseApplication):
-        def __init__(self, app, options=None):
-            self.application = app
-            super().__init__()
 
-        def load_config(self):
-            config = {}
-            config['bind'] = f'0.0.0.0:{os.getenv("PORT", "10000")}'
-            config['workers'] = 1
-            return config
-
-        def load(self):
-            return self.application
-
-    if __name__ == "__main__":
-        options = {
-            'bind': f'0.0.0.0:{os.getenv("PORT", "10000")}',
-            'workers': 1,
-        }
-        StandaloneApplication(app, options).run()
-else:
-    # Use Flask development server locally (Windows-compatible)
-    if __name__ == "__main__":
-        port = int(os.getenv("PORT", 10000))
-        app.run(host="0.0.0.0", port=port, debug=True)
+if __name__ == "__main__":
+    port = int(os.getenv("PORT", 10000))
+    debug_mode = os.getenv("FLASK_ENV", "production") == "development"
+    app.run(host="0.0.0.0", port=port, debug=debug_mode)
