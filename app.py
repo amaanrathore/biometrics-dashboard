@@ -11,7 +11,8 @@ CORS(app, resources={
         "origins": [
             "http://localhost:3000",
             "http://127.0.0.1:3000",
-            "https://biometrics-dashboard-iq8y63fym-amaan-rathores-projects.vercel.app/",  # Exact Vercel URL
+            "https://biometrics-dashboard-iq8y63fym-amaan-rathores-projects.vercel.app/", 
+            "https://biometrics-dashboard.vercel.app" # Exact Vercel URL
             # Add other preview domains if needed
         ],
         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],  # Include OPTIONS for preflight
@@ -51,7 +52,7 @@ def load_biometric_data(file_path=None):
             'Working_Hours', 'Late_Minutes', 'Status', 'Late_Flag', 'Is_Late'
         ]
         
-        # Always apply expected columns, adjusting for actual column count
+        # Apply expected columns, truncating or padding as needed
         df.columns = expected_columns[:len(df.columns)]
         if len(df.columns) < len(expected_columns):
             # Pad with 'Extra_X' if fewer columns than expected
@@ -64,10 +65,10 @@ def load_biometric_data(file_path=None):
         print("Columns after renaming:", df.columns.tolist())
         print("Sample Date values before conversion:", df['Date'].head().tolist())
         
-        # Enhanced date handling
+        # Enhanced date handling with string format
         df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
         print("Date values after conversion:", df['Date'].head().tolist())
-        df['Date'] = df['Date'].dt.strftime('%Y-%m-%d').fillna('N/A') # Convert to string after datetime, then fill N/A
+        df['Date'] = df['Date'].dt.strftime('%Y-%m-%d').fillna('N/A')  # Ensure string format for filtering
         df['Employee_ID'] = df['Employee_ID'].astype(str).str.strip()
         df = df.fillna('N/A').infer_objects(copy=False)
         
@@ -158,7 +159,7 @@ def search_records():
         if result.empty:
             print(f"No records found for Employee_ID: '{employee_id}', From_Date: '{from_date}', To_Date: '{to_date}'")
             return jsonify({
-                'records': [], 
+                'records': [],
                 'message': f"No records found for Employee_ID: {employee_id}, From_Date: {from_date}, To_Date: {to_date}"
             })
         
@@ -184,8 +185,8 @@ def internal_error(error):
     return jsonify({'error': 'Internal server error'}), 500
 
 
+
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 10000))
-
-    debug_mode = os.getenv("FLASK_ENV", "production") == "development" # This will be False on Render
+    debug_mode = os.getenv("FLASK_ENV", "production") == "development"
     app.run(host="0.0.0.0", port=port, debug=debug_mode)
