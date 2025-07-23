@@ -28,8 +28,8 @@ CORS(app, resources={
             "http://localhost:3000",
             "http://127.0.0.1:3000",
             "https://biometrics-dashboard-iq8y63fym-amaan-rathores-projects.vercel.app", 
-            "https://biometrics-dashboard.vercel.app" # Exact Vercel URL
-            # Add other preview domains if needed
+            "https://biometrics-dashboard.vercel.app", # Exact Vercel URL
+            "https://biometrics-dashboard-git-main-amaan-rathores-projects.vercel.app"
         ],
         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],  # Include OPTIONS for preflight
         "allow_headers": ["Content-Type", "Authorization", "Accept", "Origin", "X-Requested-With"],
@@ -60,7 +60,16 @@ def load_biometric_data_from_latest_excel():
             'Employee_ID', 'Employee_Name', 'Date', 'Check_In', 'Check_Out',
             'Working_Hours', 'Late_Minutes', 'Status', 'Late_Flag', 'Is_Late'
         ]
-        return pd.DataFrame(columns=expected_columns)
+        
+        # Apply expected columns, truncating or padding as needed
+        df.columns = expected_columns[:len(df.columns)]
+        if len(df.columns) < len(expected_columns):
+            # Pad with 'Extra_X' if fewer columns than expected
+            df.columns = list(df.columns) + [f'Extra_{i}' for i in range(len(df.columns), len(expected_columns))]
+        elif len(df.columns) > len(expected_columns):
+            # Truncate if more columns than expected
+            df = df.iloc[:, :len(expected_columns)]
+            df.columns = expected_columns
 
     print("Attempting to load biometric data from latest Excel:", file_path)
     try:
@@ -302,6 +311,7 @@ def not_found(error):
 @app.errorhandler(500)
 def internal_error(error):
     return jsonify({'error': 'Internal server error'}), 500
+
 
 
 if __name__ == "__main__":
